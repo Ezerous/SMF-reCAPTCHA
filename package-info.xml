@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<!DOCTYPE package-info SYSTEM "http://www.simplemachines.org/xml/package-info">
+
+<package-info xmlns="http://www.simplemachines.org/xml/package-info" xmlns:smf="http://www.simplemachines.org/">
+	<id>Ezerous:SMF-reCAPTCHA</id>
+	<name>SMF-reCAPTCHA</name>
+	<version>1.0.0</version>
+	<type>modification</type>
+
+	<install for="1.1 - 1.1.99">
+		<readme type="file">installation.txt</readme>
+		<require-file name="src/recaptcha_settings.js" destination="$themedir" />
+		<require-file name="src/Recaptcha.english.php" destination="$languagedir" />
+		<require-file name="src/Recaptcha.greek-utf8.php" destination="$languagedir" />
+		<modification type="file">modification.xml</modification>
+	</install>
+
+	<uninstall for="1.1 - 1.1.99">
+		<remove-file name="$themedir/recaptcha_settings.js" />
+		<remove-file name="$languagedir/Recaptcha.english.php" />
+		<remove-file name="$languagedir/Recaptcha.greek-utf8.php" />
+		<modification type="file" reverse="true">modification.xml</modification>
+	</uninstall>
+</package-info>

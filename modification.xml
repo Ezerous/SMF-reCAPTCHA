@@ -1,0 +1,199 @@
+<?xml version="1.0"?>
+<!DOCTYPE modification SYSTEM "http://www.simplemachines.org/xml/modification">
+<modification xmlns="http://www.simplemachines.org/xml/modification" xmlns:smf="http://www.simplemachines.org/">
+    <id>Ezerous:SMF-reCAPTCHA</id>
+    <version>1.0.0</version>
+    <file name="$sourcedir/Register.php">
+    	<operation>
+            <search position="replace"><![CDATA[loadLanguage('Login');
+	loadTemplate('Register');]]></search>
+            <add><![CDATA[loadLanguage('Login');
+	loadLanguage('Recaptcha');
+	loadTemplate('Register');]]></add>
+        </operation>
+        <operation>
+            <search position="before"><![CDATA[// You can't register if it's disabled.
+	if (!empty($modSettings['registration_method']) && $modSettings['registration_method'] == 3)
+		fatal_lang_error('registration_disabled', false);]]></search>
+            <add><![CDATA[
+
+	// Recaptcha check
+	if (!empty($modSettings['recaptchaEnabled']) && !isRecaptchaSuccessful()){
+		loadLanguage('Recaptcha');
+		fatal_error($txt['recaptcha_verification_failed'], false);
+	}]]></add>
+        </operation>
+        <operation>
+            <search position="replace"><![CDATA[die();
+}
+
+?>]]></search>
+            <add><![CDATA[die();
+}
+
+function isRecaptchaSuccessful(){
+	global $modSettings;
+
+	$recaptcha_secret_key = $modSettings["recaptchaSecretKey"];
+	$recaptcha_min_score = $modSettings["recaptchaMinScore"];
+	$recaptcha_action = "registration";
+
+	if (isset($_POST["g-recaptcha-response"])) {
+		$recaptcha_response = $_POST["g-recaptcha-response"];
+		
+		$response = file_get_contents("https://www.google.com/recaptcha/api/siteverify?secret={$recaptcha_secret_key}&response={$recaptcha_response}");
+		$response_data  = json_decode($response, true);	// PHP >= v5.2 required for json_decode
+
+		if (isset($response_data["success"]) && $response_data ["success"] == true
+            && isset($response_data["action"]) && $response_data["action"] == $recaptcha_action
+            && isset($response_data["score"]) && floatval($response_data["score"]) >= $recaptcha_min_score) {
+			return true;  
+		} else {
+			log_error("reCAPTCHA verification failed. Response: " . print_r($response_data, true));
+		    return false;
+		}
+	} else {
+		log_error("reCAPTCHA verification failed (no reCAPTCHA response).");
+		return false;
+	}
+}
+
+?>]]></add>
+        </operation>
+    </file>
+    <file name="$sourcedir/ManageRegistration.php">
+    	<operation>
+            <search position="replace"><![CDATA[loadLanguage('Login');
+	loadTemplate('Register');]]></search>
+            <add><![CDATA[loadLanguage('Login');
+	loadLanguage('Recaptcha');
+	loadTemplate('Register');]]></add>
+        </operation>
+        <operation>
+            <search position="before"><![CDATA['coppaPhone' => !empty($_POST['coppaPhone']) ? $_POST['coppaPhone'] : '',]]></search>
+            <add><![CDATA[
+			'recaptchaEnabled' => isset($_POST['recaptchaEnabled']) ? 1 : 0,
+			'recaptchaSiteKey' => !empty($_POST['recaptchaSiteKey']) ? trim($_POST['recaptchaSiteKey']) : '',
+			'recaptchaSecretKey' => isset($_POST['recaptchaSecretKey']) ? trim($_POST['recaptchaSecretKey']) : $modSettings['recaptchaSecretKey'],
+			'recaptchaMinScore' => !empty($_POST['recaptchaMinScore']) ? max(0, min(1.0, floatval($_POST['recaptchaMinScore']))) : 0,]]></add>
+        </operation>
+    </file>
+    <file name="$themedir/Register.template.php">
+        <operation>
+            <search position="after"><![CDATA[<form action="', $scripturl, '?action=register2" method="post" accept-charset="', $context['character_set'], '" name="creator" id="creator" onsubmit="return verifyAgree();">]]></search>
+            <add><![CDATA[<script src="https://www.google.com/recaptcha/api.js?render=', $modSettings['recaptchaSiteKey'], '"></script>
+<script>
+    grecaptcha.ready(function() {
+        grecaptcha.execute("', $modSettings['recaptchaSiteKey'], '", {action: "registration"}).then(function(token) {
+            document.getElementById("g-recaptcha-response").value = token;
+        });
+    });
+</script>
+
+]]></add>
+        </operation>
+        <operation>
+            <search position="before"><![CDATA[<label for="skip_coppa"><input type="checkbox" name="skip_coppa" id="skip_coppa" tabindex="', $context['tabindex']++, '" class="check" /> <b>', $context['coppa_desc'], '.</b></label>]]></search>
+            <add><![CDATA[
+						</td>
+					</tr>';
+
+	if (!empty($modSettings['recaptchaEnabled']))
+		echo '
+			<tr>
+				<td colspan="2" align="center" style="padding-top: 1ex;">
+					<div class="smalltext">This site is protected by reCAPTCHA and the Google
+						<a href="https://policies.google.com/privacy">Privacy Policy</a> and
+						<a href="https://policies.google.com/terms">Terms of Service</a> apply.
+					</div>
+]]></add>
+        </operation>     
+        <operation>
+            <search position="after"><![CDATA[<input type="submit" name="regSubmit" value="', $txt[97], '" />]]></search>
+            <add><![CDATA[<input type="hidden" name="g-recaptcha-response" id="g-recaptcha-response">
+		]]></add>
+        </operation> -->
+        <operation>
+            <search position="before"><![CDATA[function template_admin_settings()
+{
+	global $context, $settings, $options, $scripturl, $txt, $modSettings;]]></search>
+            <add><![CDATA[
+
+	$reCaptchaSecretKeyPlaceholder = "****************************************";
+
+	echo '
+	<script language="JavaScript" type="text/javascript"><!-- // --><![CDATA[
+		// Make it available for recaptcha.js
+		const reCaptchaSecretKeyPlaceholder = "' , $reCaptchaSecretKeyPlaceholder , '"
+	</script>',
+	'<script src="' . $settings['default_theme_url'] . '/recaptcha_settings.js" defer></script>';]]></add>
+        </operation> -->
+        <operation>
+            <search position="before"><![CDATA[<span class="smalltext">', $txt['admin_setting_image_verification_nogd'], '</span>';
+	}
+	echo '
+							</td>
+						</tr>]]></search>
+            <add><![CDATA[
+						<tr class="windowbg2">
+							<td width="100%" colspan="2" align="center">
+								<hr />
+							</td>
+						</tr>
+						<tr class="windowbg2" valign="top">
+							<th width="50%" align="right">
+								<label for="recaptchaEnabled_input">', $txt['recaptcha_enabled'], '</label>:
+								<div class="smalltext" style="font-weight: normal;">', $txt['recaptcha_version_info'], '</div>
+							</th>
+							<td width="50%" align="left">
+								<input type="checkbox" name="recaptchaEnabled" id="recaptchaEnabled_input"', !empty($modSettings['recaptchaEnabled']) ? ' checked="checked"' : '', ' onchange="checkRecaptcha();" class="check" />
+							</td>
+						</tr>
+						<tr class="windowbg2" valign="top">
+							<th width="50%" align="right">
+								<label for="recaptchaSiteKey_input">', $txt['recaptcha_site_key'], '</label>:
+							</th>
+							<td width="50%" align="left">
+								<input type="text" name="recaptchaSiteKey" id="recaptchaSiteKey_input" ',
+									empty($modSettings['recaptchaEnabled']) ? "disabled" : "",
+									' value="', !empty($modSettings['recaptchaSiteKey']) ? $modSettings['recaptchaSiteKey'] : '',
+									'" size="40" maxlength="100"
+								/>
+							</td>
+						</tr>
+						<tr class="windowbg2" valign="top">
+							<th width="50%" align="right">
+								<label for="recaptchaSecretKey_input">', $txt['recaptcha_secret_key'], '</label>:
+							</th>
+							<td width="50%" align="left">
+								<input type="password" name="recaptchaSecretKey" id="recaptchaSecretKey_input" ',
+									empty($modSettings['recaptchaEnabled']) ? "disabled" : "",
+									' value="',
+									!empty($modSettings['recaptchaSecretKey']) ? $reCaptchaSecretKeyPlaceholder : '',
+									'"size="40" maxlength="100"
+									onfocus="if(this.value === \'', $reCaptchaSecretKeyPlaceholder ,'\') {this.value = \'\';}"
+								/>
+							</td>
+						</tr>
+						<tr class="windowbg2" valign="top">
+							<th width="50%" align="right" style="vertical-align: middle;">
+								<label for="recaptchaMinScore_input">', $txt['recaptcha_min_score'], ':</label>
+								<div class="smalltext" style="font-weight: normal;">', $txt['recaptcha_threshold_info'], '</div>
+							</th>
+							<td width="50%" align="left" style="display: flex; vertical-align: middle; align-items: center;">
+								<input type="text" id="recaptchaMinScore_output"',
+								empty($modSettings['recaptchaEnabled']) ? "disabled" : "",
+								' value="' ,
+								(isset($modSettings['recaptchaMinScore']) ? $modSettings['recaptchaMinScore'] : '') , '"
+								size="3" maxlength="4" style="text-align: center;margin-right: 1em;" readonly />
+								<input type="range" name="recaptchaMinScore" id="recaptchaMinScore_input"',
+										empty($modSettings['recaptchaEnabled']) ? "disabled" : "",
+										' value="' , (isset($modSettings['recaptchaMinScore']) ? $modSettings['recaptchaMinScore'] : '') , '" 
+										min="0" max="1" step="0.01" 
+										oninput="this.previousElementSibling.value = this.value" />
+      						</td>
+						</tr>
+						]]></add>
+        </operation>
+    </file>
+</modification>

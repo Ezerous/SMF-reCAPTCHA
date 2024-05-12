@@ -1,0 +1,9 @@
+SMF-reCAPTCHA
+------------------
+This package adds reCAPTCHA v3 functionality to the registration page of the forum.
+
+reCAPTCHA is a free service by Google that protects websites from spam and abuse, by using advanced risk analysis techniques to tell humans and bots apart. 
+It works in the background, without user interaction, by returning a score for each request, which represents the likelihood that the latter originated from a bot.
+
+To set up the package navigate to Admin -> Registration -> Settings and set up the newly added section by following the official instructions at https://developers.google.com/recaptcha/docs/v3.
+Keep in mind that it requires at least PHP v5.2.
