@@ -81,15 +81,19 @@ function isRecaptchaSuccessful(){
     <file name="$themedir/Register.template.php">
         <operation>
             <search position="after"><![CDATA[<form action="', $scripturl, '?action=register2" method="post" accept-charset="', $context['character_set'], '" name="creator" id="creator" onsubmit="return verifyAgree();">]]></search>
-            <add><![CDATA[<script src="https://www.google.com/recaptcha/api.js?render=', $modSettings['recaptchaSiteKey'], '"></script>
-<script>
-    grecaptcha.ready(function() {
-        grecaptcha.execute("', $modSettings['recaptchaSiteKey'], '", {action: "registration"}).then(function(token) {
-            document.getElementById("g-recaptcha-response").value = token;
-        });
-    });
-</script>
+            <add><![CDATA[';
+if (!empty($modSettings['recaptchaEnabled']))
+	echo   '<style>.grecaptcha-badge { visibility: hidden; }</style>
+			<script src="https://www.google.com/recaptcha/api.js?render=', $modSettings['recaptchaSiteKey'], '"></script>
+			<script>
+				grecaptcha.ready(function() {
+					grecaptcha.execute("', $modSettings['recaptchaSiteKey'], '", {action: "registration"}).then(function(token) {
+						document.getElementById("g-recaptcha-response").value = token;
+					});
+				});
+			</script>';
 
+echo '
 ]]></add>
         </operation>
         <operation>
