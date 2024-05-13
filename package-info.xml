@@ -20,5 +20,6 @@
 		<remove-file name="$languagedir/Recaptcha.english.php" />
 		<remove-file name="$languagedir/Recaptcha.greek-utf8.php" />
 		<modification type="file" reverse="true">modification.xml</modification>
+		<code>src/delete_settings.php</code>
 	</uninstall>
 </package-info>
