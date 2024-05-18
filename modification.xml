@@ -73,8 +73,8 @@ function isRecaptchaSuccessful(){
             <search position="before"><![CDATA['coppaPhone' => !empty($_POST['coppaPhone']) ? $_POST['coppaPhone'] : '',]]></search>
             <add><![CDATA[
 			'recaptchaEnabled' => isset($_POST['recaptchaEnabled']) ? 1 : 0,
-			'recaptchaSiteKey' => !empty($_POST['recaptchaSiteKey']) ? trim($_POST['recaptchaSiteKey']) : '',
-			'recaptchaSecretKey' => isset($_POST['recaptchaSecretKey']) ? trim($_POST['recaptchaSecretKey']) : $modSettings['recaptchaSecretKey'],
+			'recaptchaSiteKey' => !empty($_POST['recaptchaSiteKey']) ? addslashes(trim($_POST['recaptchaSiteKey'])) : '',
+			'recaptchaSecretKey' => isset($_POST['recaptchaSecretKey']) ? addslashes(trim($_POST['recaptchaSecretKey'])) : $modSettings['recaptchaSecretKey'],
 			'recaptchaMinScore' => max(0, min(floatval($_POST['recaptchaMinScore']), 1.0)),]]></add>
         </operation>
     </file>
