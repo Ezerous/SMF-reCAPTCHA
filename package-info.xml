@@ -4,7 +4,7 @@
 <package-info xmlns="http://www.simplemachines.org/xml/package-info" xmlns:smf="http://www.simplemachines.org/">
 	<id>Ezerous:SMF-reCAPTCHA</id>
 	<name>SMF-reCAPTCHA</name>
-	<version>1.0.0</version>
+	<version>1.0.1</version>
 	<type>modification</type>
 
 	<install for="1.1 - 1.1.99">
