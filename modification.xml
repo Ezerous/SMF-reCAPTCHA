@@ -75,7 +75,7 @@ function isRecaptchaSuccessful(){
 			'recaptchaEnabled' => isset($_POST['recaptchaEnabled']) ? 1 : 0,
 			'recaptchaSiteKey' => !empty($_POST['recaptchaSiteKey']) ? trim($_POST['recaptchaSiteKey']) : '',
 			'recaptchaSecretKey' => isset($_POST['recaptchaSecretKey']) ? trim($_POST['recaptchaSecretKey']) : $modSettings['recaptchaSecretKey'],
-			'recaptchaMinScore' => !empty($_POST['recaptchaMinScore']) ? max(0, min(1.0, floatval($_POST['recaptchaMinScore']))) : 0,]]></add>
+			'recaptchaMinScore' => max(0, min(floatval($_POST['recaptchaMinScore']), 1.0)),]]></add>
         </operation>
     </file>
     <file name="$themedir/Register.template.php">
@@ -188,11 +188,11 @@ echo '
 								<input type="text" id="recaptchaMinScore_output"',
 								empty($modSettings['recaptchaEnabled']) ? "disabled" : "",
 								' value="' ,
-								(isset($modSettings['recaptchaMinScore']) ? $modSettings['recaptchaMinScore'] : '') , '"
+								(isset($modSettings['recaptchaMinScore']) ? $modSettings['recaptchaMinScore'] : '0') , '"
 								size="3" maxlength="4" style="text-align: center;margin-right: 1em;" readonly />
 								<input type="range" name="recaptchaMinScore" id="recaptchaMinScore_input"',
 										empty($modSettings['recaptchaEnabled']) ? "disabled" : "",
-										' value="' , (isset($modSettings['recaptchaMinScore']) ? $modSettings['recaptchaMinScore'] : '') , '" 
+										' value="' , (isset($modSettings['recaptchaMinScore']) ? $modSettings['recaptchaMinScore'] : '0') , '" 
 										min="0" max="1" step="0.01" 
 										oninput="this.previousElementSibling.value = this.value" />
       						</td>
