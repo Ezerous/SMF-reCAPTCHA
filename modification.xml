@@ -2,7 +2,7 @@
 <!DOCTYPE modification SYSTEM "http://www.simplemachines.org/xml/modification">
 <modification xmlns="http://www.simplemachines.org/xml/modification" xmlns:smf="http://www.simplemachines.org/">
     <id>Ezerous:SMF-reCAPTCHA</id>
-    <version>1.0.1</version>
+    <version>1.0.2</version>
     <file name="$sourcedir/Register.php">
     	<operation>
             <search position="replace"><![CDATA[loadLanguage('Login');
@@ -34,28 +34,49 @@
 function isRecaptchaSuccessful(){
 	global $modSettings;
 
-	$recaptcha_secret_key = $modSettings["recaptchaSecretKey"];
-	$recaptcha_min_score = $modSettings["recaptchaMinScore"];
+	$recaptcha_secret_key = isset($modSettings['recaptchaSecretKey']) ? $modSettings['recaptchaSecretKey'] : '';
+	$recaptcha_min_score = isset($modSettings['recaptchaMinScore']) ? floatval($modSettings['recaptchaMinScore']) : 0;
 	$recaptcha_action = "registration";
 
-	if (isset($_POST["g-recaptcha-response"])) {
-		$recaptcha_response = $_POST["g-recaptcha-response"];
-		
-		$response = file_get_contents("https://www.google.com/recaptcha/api/siteverify?secret={$recaptcha_secret_key}&response={$recaptcha_response}");
-		$response_data  = json_decode($response, true);	// PHP >= v5.2 required for json_decode
-
-		if (isset($response_data["success"]) && $response_data ["success"] == true
-            && isset($response_data["action"]) && $response_data["action"] == $recaptcha_action
-            && isset($response_data["score"]) && floatval($response_data["score"]) >= $recaptcha_min_score) {
-			return true;  
-		} else {
-			log_error("reCAPTCHA verification failed. Response: " . print_r($response_data, true));
-		    return false;
-		}
-	} else {
-		log_error("reCAPTCHA verification failed (no reCAPTCHA response).");
+	if (empty($recaptcha_secret_key) || empty($_POST['g-recaptcha-response']) || !is_string($_POST['g-recaptcha-response'])) {
+		log_error("reCAPTCHA verification failed (missing secret key or response).");
 		return false;
 	}
+
+	$recaptcha_request = http_build_query(array(
+		'secret' => $recaptcha_secret_key,
+		'response' => $_POST['g-recaptcha-response'],
+	), '', '&');
+	$recaptcha_context = stream_context_create(array(
+		'http' => array(
+			'method' => 'POST',
+			'header' => "Content-Type: application/x-www-form-urlencoded\r\n" .
+				"Content-Length: " . strlen($recaptcha_request) . "\r\n",
+			'content' => $recaptcha_request,
+			'timeout' => 10,
+			'ignore_errors' => true,
+		),
+	));
+	$response = @file_get_contents('https://www.google.com/recaptcha/api/siteverify', false, $recaptcha_context);
+	if ($response === false) {
+		log_error("reCAPTCHA verification failed (verification service unavailable).");
+		return false;
+	}
+
+	$response_data = json_decode($response, true);
+	if (!is_array($response_data)) {
+		log_error("reCAPTCHA verification failed (invalid response): " . $response);
+		return false;
+	}
+
+	if (isset($response_data['success']) && $response_data['success'] == true
+		&& isset($response_data['action']) && $response_data['action'] == $recaptcha_action
+		&& isset($response_data['score']) && floatval($response_data['score']) >= $recaptcha_min_score) {
+		return true;
+	}
+
+	log_error("reCAPTCHA verification failed. Response: " . print_r($response_data, true));
+	return false;
 }
 
 ?>]]></add>
@@ -75,7 +96,7 @@ function isRecaptchaSuccessful(){
 			'recaptchaEnabled' => isset($_POST['recaptchaEnabled']) ? 1 : 0,
 			'recaptchaSiteKey' => !empty($_POST['recaptchaSiteKey']) ? addslashes(trim($_POST['recaptchaSiteKey'])) : '',
 			'recaptchaSecretKey' => isset($_POST['recaptchaSecretKey']) ? addslashes(trim($_POST['recaptchaSecretKey'])) : $modSettings['recaptchaSecretKey'],
-			'recaptchaMinScore' => max(0, min(floatval($_POST['recaptchaMinScore']), 1.0)),]]></add>
+			'recaptchaMinScore' => isset($_POST['recaptchaMinScore']) ? max(0, min(floatval($_POST['recaptchaMinScore']), 1.0)) : (isset($modSettings['recaptchaMinScore']) ? $modSettings['recaptchaMinScore'] : 0),]]></add>
         </operation>
     </file>
     <file name="$themedir/Register.template.php">
@@ -85,10 +106,23 @@ function isRecaptchaSuccessful(){
 if (!empty($modSettings['recaptchaEnabled']))
 	echo   '<style>.grecaptcha-badge { visibility: hidden; }</style>
 			<script src="https://www.google.com/recaptcha/api.js?render=', $modSettings['recaptchaSiteKey'], '"></script>
-			<script>
-				grecaptcha.ready(function() {
-					grecaptcha.execute("', $modSettings['recaptchaSiteKey'], '", {action: "registration"}).then(function(token) {
-						document.getElementById("g-recaptcha-response").value = token;
+	<script>
+				var recaptchaForm = document.getElementById("creator");
+				recaptchaForm.addEventListener("submit", function(event) {
+					var form = this;
+					event.preventDefault();
+
+					if (form.recaptchaSubmitting)
+						return;
+
+					form.recaptchaSubmitting = true;
+					grecaptcha.ready(function() {
+						grecaptcha.execute("', $modSettings['recaptchaSiteKey'], '", {action: "registration"}).then(function(token) {
+							document.getElementById("g-recaptcha-response").value = token;
+							form.submit();
+						}, function() {
+							form.recaptchaSubmitting = false;
+						});
 					});
 				});
 			</script>';
@@ -116,7 +150,7 @@ echo '
             <search position="after"><![CDATA[<input type="submit" name="regSubmit" value="', $txt[97], '" />]]></search>
             <add><![CDATA[<input type="hidden" name="g-recaptcha-response" id="g-recaptcha-response">
 		]]></add>
-        </operation> -->
+        </operation>
         <operation>
             <search position="before"><![CDATA[function template_admin_settings()
 {
@@ -131,7 +165,7 @@ echo '
 		const reCaptchaSecretKeyPlaceholder = "' , $reCaptchaSecretKeyPlaceholder , '"
 	</script>',
 	'<script src="' . $settings['default_theme_url'] . '/recaptcha_settings.js" defer></script>';]]></add>
-        </operation> -->
+        </operation>
         <operation>
             <search position="before"><![CDATA[<span class="smalltext">', $txt['admin_setting_image_verification_nogd'], '</span>';
 	}

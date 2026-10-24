@@ -19,3 +19,7 @@ This package is intended for SMF v1.1.x forums that run on PHP>=v5.2.
 ## Usage
 
 After installing the package, navigate to Admin -> Registration -> Settings and set up the newly added section by following the [official instructions](https://developers.google.com/recaptcha/docs/v3).
+
+Use a reCAPTCHA v3 score-based site key and its legacy secret key. The package uses the legacy `SiteVerify` endpoint for compatibility with SMF 1.1.x and third-party integrations. Google currently recommends Enterprise `CreateAssessment` for new custom integrations, but legacy `SiteVerify` remains available for existing integrations.
+
+The verification request is sent when the registration form is submitted, so the token is not generated prematurely and allowed to expire while the user is completing the form. If verification fails, check the SMF error log for the reason and confirm that the server can make HTTPS POST requests to `www.google.com`.
