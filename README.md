@@ -23,3 +23,7 @@ After installing the package, navigate to Admin -> Registration -> Settings and 
 Use a reCAPTCHA v3 score-based site key and its legacy secret key. The package uses the legacy `SiteVerify` endpoint for compatibility with SMF 1.1.x and third-party integrations. Google currently recommends Enterprise `CreateAssessment` for new custom integrations, but legacy `SiteVerify` remains available for existing integrations.
 
 The verification request is sent when the registration form is submitted, so the token is not generated prematurely and allowed to expire while the user is completing the form. If verification fails, check the SMF error log for the reason and confirm that the server can make HTTPS POST requests to `www.google.com`.
+
+## Releases
+
+Releases are created by GitHub Actions from `master`. To publish a new package, update the version in both `package-info.xml` and `modification.xml`, commit the changes, and push to `master`. The workflow validates that both versions match, creates `SMF-reCAPTCHA_vX.Y.Z.zip`, tags the commit as `vX.Y.Z`, and creates a release titled `vX.Y.Z` with the text `Version X.Y.Z`. Commits that do not change the version are ignored. A release can also be started manually from the workflow's `Run workflow` action.
