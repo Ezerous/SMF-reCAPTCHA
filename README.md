@@ -2,6 +2,7 @@
 
 [![GitHub release](https://img.shields.io/github/release/Ezerous/SMF-reCAPTCHA.svg)](https://github.com/Ezerous/SMF-reCAPTCHA/releases)
 [![SMF](https://img.shields.io/badge/SMF-1.1.x-blue.svg?style==flat)](https://simplemachines.org)
+[![tests](https://github.com/Ezerous/SMF-reCAPTCHA/actions/workflows/tests.yml/badge.svg)](https://github.com/Ezerous/SMF-reCAPTCHA/actions/workflows/tests.yml)
 ![Last Commit](https://img.shields.io/github/last-commit/Ezerous/SMF-reCAPTCHA/develop.svg?style=flat)
 
 A package for [SMF](https://www.simplemachines.org/) v1.1.x forums that adds [reCAPTCHA](https://developers.google.com/recaptcha) v3 functionality to the registration page.
