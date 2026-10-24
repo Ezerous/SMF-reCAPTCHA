@@ -87,5 +87,4 @@ jobs:
           archive="SMF-reCAPTCHA_v${version}.zip"
           gh release create "v${version}" "$archive" \
             --repo "${{ github.repository }}" \
-            --title "v${version}" \
-            --notes "Version ${version}"
+            --title "Version ${version}"
