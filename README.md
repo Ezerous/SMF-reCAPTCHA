@@ -2,7 +2,8 @@
 
 [![GitHub release](https://img.shields.io/github/release/Ezerous/SMF-reCAPTCHA.svg)](https://github.com/Ezerous/SMF-reCAPTCHA/releases)
 [![SMF](https://img.shields.io/badge/SMF-1.1.x-blue.svg?style==flat)](https://simplemachines.org)
-[![tests](https://github.com/Ezerous/SMF-reCAPTCHA/actions/workflows/tests.yml/badge.svg)](https://github.com/Ezerous/SMF-reCAPTCHA/actions/workflows/tests.yml)
+![PHP 5.2+](https://img.shields.io/badge/PHP-5.2%2B-8892BF.svg)
+[![Tests](https://github.com/Ezerous/SMF-reCAPTCHA/actions/workflows/tests.yml/badge.svg)](https://github.com/Ezerous/SMF-reCAPTCHA/actions/workflows/tests.yml)
 ![Last Commit](https://img.shields.io/github/last-commit/Ezerous/SMF-reCAPTCHA/develop.svg?style=flat)
 
 A package for [SMF](https://www.simplemachines.org/) v1.1.x forums that adds [reCAPTCHA](https://developers.google.com/recaptcha) v3 functionality to the registration page.
@@ -27,4 +28,4 @@ The verification request is sent when the registration form is submitted, so the
 
 ## Releases
 
-Releases are created by GitHub Actions from `master`. To publish a new package, update the version in both `package-info.xml` and `modification.xml`, commit the changes, and push to `master`. The workflow validates that both versions match, creates `SMF-reCAPTCHA_vX.Y.Z.zip`, tags the commit as `vX.Y.Z`, and creates a release titled `vX.Y.Z` with the text `Version X.Y.Z`. Commits that do not change the version are ignored. A release can also be started manually from the workflow's `Run workflow` action.
+Releases are created by GitHub Actions from `master`. To publish a new package, update the version in both `package-info.xml` and `modification.xml`, commit the changes, and push to `master`. The workflow validates that both versions match, creates `SMF-reCAPTCHA_vX.Y.Z.zip`, tags the commit as `vX.Y.Z`, and creates a release titled `Version X.Y.Z`. Commits that do not change the version are ignored. A release can also be started manually from the workflow's `Run workflow` action.
