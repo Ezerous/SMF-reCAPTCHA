@@ -2,7 +2,7 @@
 <!DOCTYPE modification SYSTEM "http://www.simplemachines.org/xml/modification">
 <modification xmlns="http://www.simplemachines.org/xml/modification" xmlns:smf="http://www.simplemachines.org/">
     <id>Ezerous:SMF-reCAPTCHA</id>
-    <version>1.0.4</version>
+    <version>1.0.5</version>
     <file name="$sourcedir/Register.php">
     	<operation>
             <search position="replace"><![CDATA[loadLanguage('Login');
@@ -125,6 +125,20 @@ if (!empty($modSettings['recaptchaEnabled']))
 					var resubmitting = false;
 					var resubmitEvent = null;
 					var attemptNumber = 0;
+
+					// A server-side registration error can send the user back to this page.
+					// Browsers may restore the form and its JavaScript state from BFCache,
+					// so the previous successful POST must not leave pending = true.
+					window.addEventListener("pageshow", function (event) {
+						if (!event.persisted)
+							return;
+						attemptNumber++; // Ignore any asynchronous callback from before navigation.
+						pending = false;
+						resubmitting = false;
+						resubmitEvent = null;
+						if (tokenField)
+							tokenField.value = "";
+					});
 
 					function reportError(reason) {
 						pending = false;

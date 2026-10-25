@@ -16,7 +16,7 @@ function setup(opts = {}) {
   let executeCalls = 0, verifyCalls = 0, submitEvents = 0;
   let tokenCount = 0;
   const postRequests = [], errorMessages = [], alertMessages = [];
-  const submitListeners = [], domReadyListeners = [];
+  const submitListeners = [], domReadyListeners = [], pageShowListeners = [];
   const timers = new Map();
   let nextTimerId = 1;
   let rejectGoogle = false;
@@ -47,7 +47,11 @@ function setup(opts = {}) {
     console: {error(...args) {errorMessages.push(args.map(String).join(' '));}},
     alert(message) {alertMessages.push(message)},
     setTimeout(callback) {const id = nextTimerId++; timers.set(id, callback); return id;},
-    clearTimeout(id) {timers.delete(id);}
+    clearTimeout(id) {timers.delete(id);},
+    addEventListener(name, callback) {
+      assert.strictEqual(name, 'pageshow');
+      pageShowListeners.push(callback);
+    }
   };
   if (!googleBlocked) {
     window.grecaptcha = {
@@ -93,6 +97,7 @@ function setup(opts = {}) {
   return {
     ready,
     click: () => button.click(),
+    pageshow(persisted) {pageShowListeners.forEach(cb=>cb({persisted}));},
     expireTimeouts() {const callbacks=[...timers.values()];timers.clear();callbacks.forEach(cb=>cb());},
     setNativeValid(value) {nativeValid=value;},
     get stats() {return {executeCalls,verifyCalls,submitEvents,postRequests,errorMessages,alertMessages,token:tokenField.value}}
@@ -174,5 +179,30 @@ const flush = async () => {await Promise.resolve();await new Promise(resolve=>se
   t=setup({domLoading:false});t.click();await flush();
   assert.strictEqual(t.stats.postRequests.length,1);
   console.log('PASS: immediate initialization when DOM is already ready');
-  console.log('ALL 12 TESTS PASSED');
+
+  // Regression: server rejects the original POST (e.g., incorrect SMF visual CAPTCHA),
+  // the user returns via Back, and BFCache restores the form and JavaScript state.
+  t=setup();t.ready();t.click();await flush();
+  assert.strictEqual(t.stats.postRequests.length,1);
+  t.pageshow(true);
+  assert.strictEqual(t.stats.token,'');
+  t.click();await flush();
+  assert.strictEqual(t.stats.executeCalls,2);
+  assert.strictEqual(t.stats.postRequests.length,2);
+  assert.notStrictEqual(t.stats.postRequests[0].token,t.stats.postRequests[1].token);
+  console.log('PASS: BFCache return after server-side CAPTCHA error allows a fresh submission');
+
+  t=setup({pendingGoogle:true});t.ready();t.click();await flush();
+  t.pageshow(true); // Also reset an unfinished request that was frozen in BFCache.
+  t.click();await flush();
+  assert.strictEqual(t.stats.executeCalls,2);
+  assert.strictEqual(t.stats.postRequests.length,0);
+  console.log('PASS: BFCache restore clears an in-flight Google request state');
+
+  t=setup({pendingGoogle:true});t.ready();t.click();await flush();
+  t.pageshow(false); // A normal pageshow must NOT reset an active request.
+  t.click();await flush();
+  assert.strictEqual(t.stats.executeCalls,1);
+  console.log('PASS: ordinary pageshow leaves in-flight reCAPTCHA protected');
+  console.log('ALL 15 TESTS PASSED');
 })().catch(err => {console.error(err.stack);process.exit(1);});
