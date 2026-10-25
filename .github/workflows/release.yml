@@ -64,7 +64,7 @@ jobs:
 
           (
             cd "$staging"
-            zip -r "../$archive" installation.txt modification.xml package-info.xml README.md src
+            zip -X -0 -r "../$archive" installation.txt modification.xml package-info.xml README.md src
           )
 
           expected="$(cd "$staging" && find . -mindepth 1 -printf '%P\n' | sort)"
