@@ -21,3 +21,18 @@ jobs:
             --entrypoint /usr/bin/php \
             ghcr.io/clagomess/docker-php-5.2:latest \
             tests/validate-package.php
+  validate-registration-js:
+    name: Registration JavaScript (Node 22)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Run registration regression tests
+        run: node tests/registration.test.js
