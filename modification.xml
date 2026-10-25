@@ -107,26 +107,121 @@ if (!empty($modSettings['recaptchaEnabled']))
 	echo   '<style>.grecaptcha-badge { visibility: hidden; }</style>
 			<script src="https://www.google.com/recaptcha/api.js?render=', $modSettings['recaptchaSiteKey'], '"></script>
 	<script>
-				var recaptchaForm = document.getElementById("creator");
-				recaptchaForm.addEventListener("submit", function(event) {
-					var form = this;
-					event.preventDefault();
-
-					if (form.recaptchaSubmitting)
+			(function () {
+				function initRecaptchaRegistration() {
+					var form = document.getElementById("creator");
+					if (!form) {
+						if (window.console && console.error)
+							console.error("SMF reCAPTCHA: registration form not found");
 						return;
+					}
+					if (form.smfRecaptchaInitialized)
+						return;
+					form.smfRecaptchaInitialized = true;
 
-					form.recaptchaSubmitting = true;
-					grecaptcha.ready(function() {
-						grecaptcha.execute("', $modSettings['recaptchaSiteKey'], '", {action: "registration"}).then(function(token) {
-							document.getElementById("g-recaptcha-response").value = token;
-							form.submit();
-						}, function() {
-							form.recaptchaSubmitting = false;
-						});
+					var tokenField = form.querySelector("input[name=g-recaptcha-response]");
+					var defaultSubmitter = form.querySelector("input[type=submit][name=regSubmit],button[name=regSubmit]");
+					var pending = false;
+					var resubmitting = false;
+					var resubmitEvent = null;
+					var attemptNumber = 0;
+
+					function reportError(reason) {
+						pending = false;
+						if (tokenField)
+							tokenField.value = "";
+						if (window.console && console.error)
+							console.error("SMF reCAPTCHA:", reason);
+						window.alert("reCAPTCHA verification could not be completed. Please try again.");
+					}
+
+					form.addEventListener("submit", function (event) {
+						if (resubmitting) {
+							resubmitEvent = event;
+							return;
+						}
+						// Respect the existing SMF onsubmit="return verifyAgree();" handler.
+						if (event.defaultPrevented)
+							return;
+						event.preventDefault();
+						if (pending)
+							return;
+
+						var submitter = event.submitter || defaultSubmitter;
+						if (!tokenField || !submitter || submitter.form !== form) {
+							reportError("Missing token field or submit button");
+							return;
+						}
+						if (!window.grecaptcha || typeof window.grecaptcha.ready !== "function" || typeof window.grecaptcha.execute !== "function") {
+							reportError("Google reCAPTCHA API unavailable");
+							return;
+						}
+
+						pending = true;
+						var attempt = ++attemptNumber;
+						var timeout = window.setTimeout(function () {
+							failAttempt("Google reCAPTCHA timed out");
+						}, 20000);
+
+						function failAttempt(reason) {
+							if (attempt !== attemptNumber)
+								return;
+							attemptNumber++;
+							window.clearTimeout(timeout);
+							reportError(reason);
+						}
+
+						try {
+							window.grecaptcha.ready(function () {
+								if (attempt !== attemptNumber)
+									return;
+								try {
+									window.grecaptcha.execute("', $modSettings['recaptchaSiteKey'], '", {action: "registration"}).then(function (token) {
+										if (attempt !== attemptNumber)
+											return;
+										attemptNumber++;
+										window.clearTimeout(timeout);
+										if (typeof token !== "string" || !token) {
+											reportError("Google returned an empty token");
+											return;
+										}
+										tokenField.value = token;
+
+										// Re-run normal browser and SMF validation without starting another captcha.
+										resubmitting = true;
+										resubmitEvent = null;
+										try {
+											if (typeof form.requestSubmit === "function")
+												form.requestSubmit(submitter);
+											else
+												submitter.click();
+										} catch (error) {
+											reportError(error);
+										} finally {
+											resubmitting = false;
+											// Allow another attempt if validation stopped the second submit.
+											if (!resubmitEvent || resubmitEvent.defaultPrevented) {
+												tokenField.value = "";
+												pending = false;
+											}
+										}
+									}, failAttempt);
+								} catch (error) {
+									failAttempt(error);
+								}
+							});
+						} catch (error) {
+							failAttempt(error);
+						}
 					});
-				});
-			</script>';
+				}
 
+				if (document.readyState === "loading")
+					document.addEventListener("DOMContentLoaded", initRecaptchaRegistration);
+				else
+					initRecaptchaRegistration();
+			})();
+		</script>';
 echo '
 ]]></add>
         </operation>
@@ -144,8 +239,8 @@ echo '
 						<a href="https://policies.google.com/privacy">Privacy Policy</a> and
 						<a href="https://policies.google.com/terms">Terms of Service</a> apply.
 					</div>
-]]></add>
-        </operation>     
+					]]></add>
+        </operation>
         <operation>
             <search position="after"><![CDATA[<input type="submit" name="regSubmit" value="', $txt[97], '" />]]></search>
             <add><![CDATA[<input type="hidden" name="g-recaptcha-response" id="g-recaptcha-response">
@@ -220,15 +315,15 @@ echo '
 							</th>
 							<td width="50%" align="left" style="display: flex; vertical-align: middle; align-items: center;">
 								<input type="text" id="recaptchaMinScore_output"',
-								empty($modSettings['recaptchaEnabled']) ? "disabled" : "",
-								' value="' ,
-								(isset($modSettings['recaptchaMinScore']) ? $modSettings['recaptchaMinScore'] : '0') , '"
-								size="3" maxlength="4" style="text-align: center;margin-right: 1em;" readonly />
+									empty($modSettings['recaptchaEnabled']) ? "disabled" : "",
+									' value="' ,
+									(isset($modSettings['recaptchaMinScore']) ? $modSettings['recaptchaMinScore'] : '0') , '"
+									size="3" maxlength="4" style="text-align: center;margin-right: 1em;" readonly />
 								<input type="range" name="recaptchaMinScore" id="recaptchaMinScore_input"',
 										empty($modSettings['recaptchaEnabled']) ? "disabled" : "",
-										' value="' , (isset($modSettings['recaptchaMinScore']) ? $modSettings['recaptchaMinScore'] : '0') , '" 
-										min="0" max="1" step="0.01" 
-										oninput="this.previousElementSibling.value = this.value" />
+									' value="' , (isset($modSettings['recaptchaMinScore']) ? $modSettings['recaptchaMinScore'] : '0') , '"
+									min="0" max="1" step="0.01"
+									oninput="this.previousElementSibling.value = this.value" />
       						</td>
 						</tr>
 						]]></add>
